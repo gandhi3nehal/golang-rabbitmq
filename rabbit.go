@@ -8,7 +8,7 @@ import (
 )
 
 type Rmsg struct {
-	Topic string `json:"topic"`
+	Queue string `json:"queue"`
 	Uid   string `json:"uid"`
 	Msg   string `json:"msg"`
 }
@@ -27,7 +27,7 @@ func main() {
 	for scanner.Scan() {
 		msg := scanner.Text()
 		rmsg := Rmsg{
-			Topic: "topic",
+			Queue: "hakka",
 			Uid:   "uid",
 			Msg:   msg,
 		}
@@ -54,12 +54,12 @@ func initConsumer() {
 
 	// create queue
 	queue, err := amqpChannel.QueueDeclare(
-		"lambdaops", // channelname
-		false,       // durable
-		false,       // delete when unused
-		false,       // exclusive
-		false,       // no-wait
-		nil,         // arguments
+		"hakka", // channelname
+		false,   // durable
+		false,   // delete when unused
+		true,    // exclusive
+		false,   // no-wait
+		nil,     // arguments
 	)
 	if err != nil {
 		log.Printf("ERROR: fail create queue: %s", err.Error())
@@ -113,27 +113,13 @@ func initProducer() {
 		os.Exit(1)
 	}
 
-	// create queue
-	queue, err := amqpChannel.QueueDeclare(
-		"lambdaops", // channelname
-		false,       // durable
-		false,       // delete when unused
-		false,       // exclusive
-		false,       // no-wait
-		nil,         // arguments
-	)
-	if err != nil {
-		log.Printf("ERROR: fail create queue: %s", err.Error())
-		os.Exit(1)
-	}
-
 	for {
 		select {
 		case rmsg := <-rchan:
 			// publish message
 			err = amqpChannel.Publish(
 				"",         // exchange
-				queue.Name, // routing key
+				rmsg.Queue, // routing key
 				false,      // mandatory
 				false,      // immediate
 				amqp.Publishing{
@@ -144,8 +130,8 @@ func initProducer() {
 			if err != nil {
 				log.Printf("ERROR: fail publish: %s", err.Error())
 			} else {
-				log.Printf("INFO: published message: %s, uid: %s topic: %s",
-					rmsg.Msg, rmsg.Uid, rmsg.Topic)
+				log.Printf("INFO: published message: %s, uid: %s, queue: %s",
+					rmsg.Msg, rmsg.Uid, rmsg.Queue)
 			}
 		}
 	}
