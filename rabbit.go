@@ -7,14 +7,14 @@ import (
 	"os"
 )
 
-type Kmsg struct {
+type Rmsg struct {
 	Topic string `json:"topic"`
 	Uid   string `json:"uid"`
 	Msg   string `json:"msg"`
 }
 
 // channel to publish rabbit messages
-var kchan = make(chan Kmsg, 10)
+var rchan = make(chan Rmsg, 10)
 
 func main() {
 	// consuner
@@ -26,12 +26,12 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		msg := scanner.Text()
-		kmsg := Kmsg{
+		rmsg := Rmsg{
 			Topic: "topic",
 			Uid:   "uid",
 			Msg:   msg,
 		}
-		kchan <- kmsg
+		rchan <- rmsg
 	}
 }
 
@@ -129,7 +129,7 @@ func initProducer() {
 
 	for {
 		select {
-		case kmsg := <-kchan:
+		case rmsg := <-rchan:
 			// publish message
 			err = amqpChannel.Publish(
 				"",         // exchange
@@ -138,14 +138,14 @@ func initProducer() {
 				false,      // immediate
 				amqp.Publishing{
 					ContentType: "text/plain",
-					Body:        []byte(kmsg.Msg),
+					Body:        []byte(rmsg.Msg),
 				},
 			)
 			if err != nil {
-				log.Printf("ERROR: fail create queue: %s", err.Error())
+				log.Printf("ERROR: fail publish: %s", err.Error())
 			} else {
 				log.Printf("INFO: published message: %s, uid: %s topic: %s",
-					kmsg.Msg, kmsg.Uid, kmsg.Topic)
+					rmsg.Msg, rmsg.Uid, rmsg.Topic)
 			}
 		}
 	}
