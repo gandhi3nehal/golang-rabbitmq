@@ -1,0 +1,152 @@
+package main
+
+import (
+	"bufio"
+	"github.com/streadway/amqp"
+	"log"
+	"os"
+)
+
+type Kmsg struct {
+	Topic string `json:"topic"`
+	Uid   string `json:"uid"`
+	Msg   string `json:"msg"`
+}
+
+// channel to publish rabbit messages
+var kchan = make(chan Kmsg, 10)
+
+func main() {
+	// consuner
+	go initConsumer()
+
+	// producer
+	go initProducer()
+	// read commandline input
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		msg := scanner.Text()
+		kmsg := Kmsg{
+			Topic: "topic",
+			Uid:   "uid",
+			Msg:   msg,
+		}
+		kchan <- kmsg
+	}
+}
+
+func initConsumer() {
+	// conn
+	conn, err := amqp.Dial("amqp://admin:admin@localhost:5672/")
+	if err != nil {
+		log.Printf("ERROR: fail init consumer: %s", err.Error())
+		os.Exit(1)
+	}
+
+	log.Printf("INFO: done init consumer conn")
+
+	// create channel
+	amqpChannel, err := conn.Channel()
+	if err != nil {
+		log.Printf("ERROR: fail create channel: %s", err.Error())
+		os.Exit(1)
+	}
+
+	// create queue
+	queue, err := amqpChannel.QueueDeclare(
+		"lambdaops", // channelname
+		false,       // durable
+		false,       // delete when unused
+		false,       // exclusive
+		false,       // no-wait
+		nil,         // arguments
+	)
+	if err != nil {
+		log.Printf("ERROR: fail create queue: %s", err.Error())
+		os.Exit(1)
+	}
+
+	// channel
+	msgChannel, err := amqpChannel.Consume(
+		queue.Name, // queue
+		"",         // consumer
+		false,      // auto-ack
+		false,      // exclusive
+		false,      // no-local
+		false,      // no-wait
+		nil,        // args
+	)
+	if err != nil {
+		log.Printf("error: fail create channel: %s", err.Error())
+		os.Exit(1)
+	}
+
+	// consume
+	for {
+		select {
+		case msg := <-msgChannel:
+			log.Printf("INFO: message received %s", msg.Body)
+
+			// ack for message
+			err = msg.Ack(true)
+			if err != nil {
+				log.Printf("error: fail to ack: %s", err.Error())
+			}
+		}
+	}
+}
+
+func initProducer() {
+	// conn
+	conn, err := amqp.Dial("amqp://admin:admin@localhost:5672/")
+	if err != nil {
+		log.Printf("ERROR: fail init consumer: %s", err.Error())
+		os.Exit(1)
+	}
+
+	log.Printf("INFO: done init producer conn")
+
+	// create channel
+	amqpChannel, err := conn.Channel()
+	if err != nil {
+		log.Printf("ERROR: fail create channel: %s", err.Error())
+		os.Exit(1)
+	}
+
+	// create queue
+	queue, err := amqpChannel.QueueDeclare(
+		"lambdaops", // channelname
+		false,       // durable
+		false,       // delete when unused
+		false,       // exclusive
+		false,       // no-wait
+		nil,         // arguments
+	)
+	if err != nil {
+		log.Printf("ERROR: fail create queue: %s", err.Error())
+		os.Exit(1)
+	}
+
+	for {
+		select {
+		case kmsg := <-kchan:
+			// publish message
+			err = amqpChannel.Publish(
+				"",         // exchange
+				queue.Name, // routing key
+				false,      // mandatory
+				false,      // immediate
+				amqp.Publishing{
+					ContentType: "text/plain",
+					Body:        []byte(kmsg.Msg),
+				},
+			)
+			if err != nil {
+				log.Printf("ERROR: fail create queue: %s", err.Error())
+			} else {
+				log.Printf("INFO: published message: %s, uid: %s topic: %s",
+					kmsg.Msg, kmsg.Uid, kmsg.Topic)
+			}
+		}
+	}
+}
