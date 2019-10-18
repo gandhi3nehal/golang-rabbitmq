@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	spec "github.com/erangaeb/ops-spec/ops-spec"
+	"github.com/golang/protobuf/proto"
 	"github.com/streadway/amqp"
 	"log"
 	"os"
@@ -77,7 +79,7 @@ func initConsumer() {
 		nil,        // args
 	)
 	if err != nil {
-		log.Printf("error: fail create channel: %s", err.Error())
+		log.Printf("ERROR: fail create channel: %s", err.Error())
 		os.Exit(1)
 	}
 
@@ -85,12 +87,19 @@ func initConsumer() {
 	for {
 		select {
 		case msg := <-msgChannel:
-			log.Printf("INFO: message received %s", msg.Body)
+			// create person
+			p := &spec.Person{}
+			err = proto.Unmarshal(msg.Body, p)
+			if err != nil {
+				log.Printf("ERROR: fail unmarshl: %s", msg.Body)
+				continue
+			}
+			log.Printf("INFO: got obj: %v", p)
 
 			// ack for message
 			err = msg.Ack(true)
 			if err != nil {
-				log.Printf("error: fail to ack: %s", err.Error())
+				log.Printf("ERROR: fail to ack: %s", err.Error())
 			}
 		}
 	}
@@ -116,6 +125,19 @@ func initProducer() {
 	for {
 		select {
 		case rmsg := <-rchan:
+			// person
+			p := &spec.Person{
+				Name: rmsg.Msg,
+				Age:  24,
+			}
+
+			// marshal
+			data, err := proto.Marshal(p)
+			if err != nil {
+				log.Printf("ERROR: fail marshal: %s", err.Error())
+				continue
+			}
+
 			// publish message
 			err = amqpChannel.Publish(
 				"",         // exchange
@@ -124,15 +146,16 @@ func initProducer() {
 				false,      // immediate
 				amqp.Publishing{
 					ContentType: "text/plain",
-					Body:        []byte(rmsg.Msg),
+					Body:        data,
 				},
 			)
 			if err != nil {
 				log.Printf("ERROR: fail publish: %s", err.Error())
-			} else {
-				log.Printf("INFO: published message: %s, uid: %s, queue: %s",
-					rmsg.Msg, rmsg.Uid, rmsg.Queue)
+				continue
 			}
+
+			log.Printf("INFO: published obj: %v, uid: %s, queue: %s",
+				p, rmsg.Uid, rmsg.Queue)
 		}
 	}
 }
