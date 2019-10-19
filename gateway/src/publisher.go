@@ -21,7 +21,7 @@ var rchans = make(map[string](chan spec.CreateDocumentReply))
 
 func initProducer() {
 	// conn
-	conn, err := amqp.Dial("amqp://admin:admin@localhost:5672/")
+	conn, err := amqp.Dial(rabbitConfig.uri)
 	if err != nil {
 		log.Printf("ERROR: fail init consumer: %s", err.Error())
 		os.Exit(1)
