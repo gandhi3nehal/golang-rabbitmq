@@ -15,8 +15,8 @@ func main() {
 	// producer
 	go initProducer()
 
-	// read commandline input
-	readInput()
+	// document REST api
+	initApi()
 }
 
 func readInput() {
@@ -39,11 +39,11 @@ func readInput() {
 		pchan <- msg
 
 		// wait for reply
-		waitReply(docMsg.Uid, rchan)
+		waitReply2(docMsg.Uid, rchan)
 	}
 }
 
-func waitReply(uid string, rchan chan spec.CreateDocumentReply) {
+func waitReply2(uid string, rchan chan spec.CreateDocumentReply) {
 	for {
 		select {
 		case docReply := <-rchan:
