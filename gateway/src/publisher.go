@@ -46,10 +46,10 @@ func initProducer() {
 
 			// publish message
 			err = amqpChannel.Publish(
-				"",      // exchange
-				"hakka", // routing key
-				false,   // mandatory
-				false,   // immediate
+				"",            // exchange
+				msg.QueueName, // routing key
+				false,         // mandatory
+				false,         // immediate
 				amqp.Publishing{
 					ContentType: "text/plain",
 					Body:        data,

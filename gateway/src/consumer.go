@@ -27,10 +27,10 @@ func initConsumer() {
 
 	// create queue
 	queue, err := amqpChannel.QueueDeclare(
-		"rahasak", // channelname
-		false,     // durable
+		"gateway", // channelname
+		true,      // durable
 		false,     // delete when unused
-		true,      // exclusive
+		false,     // exclusive
 		false,     // no-wait
 		nil,       // arguments
 	)

@@ -22,10 +22,10 @@ func readInput() {
 		name := scanner.Text()
 
 		docMsg := docMsg(name)
-		docMsg.ReplyTo = "rahasak"
+		docMsg.ReplyTo = "gateway"
 
 		msg := RabbitMsg{
-			QueueName: "rahasak",
+			QueueName: "storage",
 			Message:   *docMsg,
 		}
 		rchan <- msg
