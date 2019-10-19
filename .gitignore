@@ -1,2 +1,4 @@
 rabbit-ops/build/*
+gateway/build/*
+storage/build/*
 .keys
