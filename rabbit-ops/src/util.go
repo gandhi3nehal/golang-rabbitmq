@@ -6,15 +6,6 @@ import (
 	"time"
 )
 
-func timestamp() int64 {
-	return time.Now().UnixNano() / int64(time.Millisecond)
-}
-
-func uid() string {
-	t := time.Now().UnixNano() / int64(time.Millisecond)
-	return "ops" + strconv.FormatInt(t, 10)
-}
-
 func docMsg(name string) *spec.CreateDocumentMessage {
 	uid := uid()
 	doc := &spec.Document{
@@ -29,4 +20,13 @@ func docMsg(name string) *spec.CreateDocumentMessage {
 	}
 
 	return msg
+}
+
+func uid() string {
+	t := time.Now().UnixNano() / int64(time.Millisecond)
+	return "ops" + strconv.FormatInt(t, 10)
+}
+
+func timestamp() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
 }
