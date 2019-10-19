@@ -9,14 +9,8 @@ import (
 	"os"
 )
 
-type Rmsg struct {
-	Queue string `json:"queue"`
-	Uid   string `json:"uid"`
-	Msg   string `json:"msg"`
-}
-
 // channel to publish rabbit messages
-var rchan = make(chan Rmsg, 10)
+var dchan = make(chan spec.CreateDocumentMessage, 10)
 
 func main() {
 	// consuner
@@ -24,16 +18,13 @@ func main() {
 
 	// producer
 	go initProducer()
+
 	// read commandline input
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		msg := scanner.Text()
-		rmsg := Rmsg{
-			Queue: "hakka",
-			Uid:   "uid",
-			Msg:   msg,
-		}
-		rchan <- rmsg
+		name := scanner.Text()
+		docMsg := docMsg(name)
+		dchan <- *docMsg
 	}
 }
 
@@ -87,14 +78,14 @@ func initConsumer() {
 	for {
 		select {
 		case msg := <-msgChannel:
-			// create person
-			p := &spec.Person{}
-			err = proto.Unmarshal(msg.Body, p)
+			// unmarshal
+			docMsg := &spec.CreateDocumentMessage{}
+			err = proto.Unmarshal(msg.Body, docMsg)
 			if err != nil {
 				log.Printf("ERROR: fail unmarshl: %s", msg.Body)
 				continue
 			}
-			log.Printf("INFO: got obj: %v", p)
+			log.Printf("INFO: received msg: %v", docMsg)
 
 			// ack for message
 			err = msg.Ack(true)
@@ -124,15 +115,9 @@ func initProducer() {
 
 	for {
 		select {
-		case rmsg := <-rchan:
-			// person
-			p := &spec.Person{
-				Name: rmsg.Msg,
-				Age:  24,
-			}
-
+		case docMsg := <-dchan:
 			// marshal
-			data, err := proto.Marshal(p)
+			data, err := proto.Marshal(&docMsg)
 			if err != nil {
 				log.Printf("ERROR: fail marshal: %s", err.Error())
 				continue
@@ -140,22 +125,21 @@ func initProducer() {
 
 			// publish message
 			err = amqpChannel.Publish(
-				"",         // exchange
-				rmsg.Queue, // routing key
-				false,      // mandatory
-				false,      // immediate
+				"",      // exchange
+				"hakka", // routing key
+				false,   // mandatory
+				false,   // immediate
 				amqp.Publishing{
 					ContentType: "text/plain",
 					Body:        data,
 				},
 			)
 			if err != nil {
-				log.Printf("ERROR: fail publish: %s", err.Error())
+				log.Printf("ERROR: fail publish msg: %s", err.Error())
 				continue
 			}
 
-			log.Printf("INFO: published obj: %v, uid: %s, queue: %s",
-				p, rmsg.Uid, rmsg.Queue)
+			log.Printf("INFO: published msg: %v", docMsg)
 		}
 	}
 }
