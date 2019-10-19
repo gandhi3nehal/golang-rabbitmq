@@ -1,7 +1,7 @@
 package main
 
 import (
-	spec "github.com/erangaeb/ops-spec/ops-spec"
+	spec "github.com/erangaeb/document-spec/document-spec"
 	"github.com/golang/protobuf/proto"
 	"github.com/streadway/amqp"
 	"log"

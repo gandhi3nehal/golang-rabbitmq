@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	spec "github.com/erangaeb/ops-spec/ops-spec"
+	spec "github.com/erangaeb/document-spec/document-spec"
 	"github.com/gorilla/mux"
 	"io"
 	"io/ioutil"
