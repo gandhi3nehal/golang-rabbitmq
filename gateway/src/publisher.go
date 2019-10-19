@@ -10,12 +10,12 @@ import (
 )
 
 type RabbitMsg struct {
-	Queue   string                     `json:"queue"`
-	Message spec.CreateDocumentMessage `json:"message"`
+	QueueName string                     `json:"queueName"`
+	Message   spec.CreateDocumentMessage `json:"message"`
 }
 
 // channel to publish rabbit messages
-var rchan = make(chan spec.CreateDocumentMessage, 10)
+var rchan = make(chan RabbitMsg, 10)
 
 func initProducer() {
 	// conn
@@ -36,9 +36,9 @@ func initProducer() {
 
 	for {
 		select {
-		case docMsg := <-rchan:
+		case msg := <-rchan:
 			// marshal
-			data, err := proto.Marshal(&docMsg)
+			data, err := proto.Marshal(&msg.Message)
 			if err != nil {
 				log.Printf("ERROR: fail marshal: %s", err.Error())
 				continue
@@ -60,15 +60,15 @@ func initProducer() {
 				continue
 			}
 
-			log.Printf("INFO: published msg: %v", docMsg)
+			log.Printf("INFO: published msg: %v", msg.Message)
 
 			// wait reply from rabbit
-			go waitReply(conn, docMsg.Uid)
+			//go waitReply(conn, docMsg)
 		}
 	}
 }
 
-func waitReply(conn *amqp.Connection, queueName string) {
+func waitReply(conn *amqp.Connection, docMsg spec.CreateDocumentMessage) {
 	// create channel
 	amqpChannel, err := conn.Channel()
 	if err != nil {
@@ -78,12 +78,12 @@ func waitReply(conn *amqp.Connection, queueName string) {
 
 	// create queue
 	queue, err := amqpChannel.QueueDeclare(
-		queueName, // channelname
-		false,     // durable
-		true,      // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
+		docMsg.ReplyTo, // channelname
+		false,          // durable
+		true,           // delete when unused
+		false,          // exclusive
+		false,          // no-wait
+		nil,            // arguments
 	)
 	if err != nil {
 		log.Printf("ERROR: fail create queue: %s", err.Error())
@@ -110,6 +110,7 @@ func waitReply(conn *amqp.Connection, queueName string) {
 		select {
 		case msg := <-msgChannel:
 			// unmarshal
+			log.Printf("INFO: got reply: %v", msg)
 			docRply := &spec.CreateDocumentReply{}
 			err = proto.Unmarshal(msg.Body, docRply)
 			if err != nil {
@@ -123,6 +124,7 @@ func waitReply(conn *amqp.Connection, queueName string) {
 			if err != nil {
 				log.Printf("ERROR: fail to ack: %s", err.Error())
 			}
+			return
 		case <-time.After(10 * time.Second):
 			log.Printf("ERROR: timeout request")
 			return

@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
+	// consumer
+	go initConsumer()
+
 	// producer
 	go initProducer()
 
@@ -17,7 +20,14 @@ func readInput() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		name := scanner.Text()
+
 		docMsg := docMsg(name)
-		rchan <- *docMsg
+		docMsg.ReplyTo = "rahasak"
+
+		msg := RabbitMsg{
+			QueueName: "rahasak",
+			Message:   *docMsg,
+		}
+		rchan <- msg
 	}
 }

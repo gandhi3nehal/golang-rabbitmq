@@ -16,7 +16,6 @@ func docMsg(name string) *spec.CreateDocumentMessage {
 	msg := &spec.CreateDocumentMessage{
 		Uid:      uid,
 		Document: doc,
-		ReplyTo:  uid,
 	}
 
 	return msg

@@ -27,12 +27,12 @@ func initConsumer() {
 
 	// create queue
 	queue, err := amqpChannel.QueueDeclare(
-		"hakka", // channelname
-		false,   // durable
-		false,   // delete when unused
-		true,    // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		"rahasak", // channelname
+		false,     // durable
+		false,     // delete when unused
+		true,      // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	if err != nil {
 		log.Printf("ERROR: fail create queue: %s", err.Error())
@@ -59,13 +59,13 @@ func initConsumer() {
 		select {
 		case msg := <-msgChannel:
 			// unmarshal
-			docMsg := &spec.CreateDocumentMessage{}
-			err = proto.Unmarshal(msg.Body, docMsg)
+			docRply := &spec.CreateDocumentReply{}
+			err = proto.Unmarshal(msg.Body, docRply)
 			if err != nil {
 				log.Printf("ERROR: fail unmarshl: %s", msg.Body)
 				continue
 			}
-			log.Printf("INFO: received msg: %v", docMsg)
+			log.Printf("INFO: received msg: %v", docRply)
 
 			// ack for message
 			err = msg.Ack(true)

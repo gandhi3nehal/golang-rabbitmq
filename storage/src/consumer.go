@@ -28,9 +28,9 @@ func initConsumer() {
 	// create queue
 	queue, err := amqpChannel.QueueDeclare(
 		"hakka", // channelname
-		false,   // durable
+		true,    // durable
 		false,   // delete when unused
-		true,    // exclusive
+		false,   // exclusive
 		false,   // no-wait
 		nil,     // arguments
 	)
