@@ -6,7 +6,6 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"os"
-	"time"
 )
 
 type RabbitMsg struct {
