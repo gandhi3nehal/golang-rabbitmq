@@ -27,12 +27,12 @@ func initConsumer() {
 
 	// create queue
 	queue, err := amqpChannel.QueueDeclare(
-		"hakka", // channelname
-		true,    // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		"storage", // channelname
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	if err != nil {
 		log.Printf("ERROR: fail create queue: %s", err.Error())
