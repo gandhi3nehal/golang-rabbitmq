@@ -2,7 +2,10 @@ package main
 
 import (
 	"bufio"
+	spec "github.com/erangaeb/ops-spec/ops-spec"
+	"log"
 	"os"
+	"time"
 )
 
 func main() {
@@ -24,10 +27,39 @@ func readInput() {
 		docMsg := docMsg(name)
 		docMsg.ReplyTo = "gateway"
 
+		// create channel and add to rchans with uid
+		rchan := make(chan spec.CreateDocumentReply)
+		rchans[docMsg.Uid] = rchan
+
+		// publish rabbit message
 		msg := RabbitMsg{
 			QueueName: "storage",
 			Message:   *docMsg,
 		}
-		rchan <- msg
+		pchan <- msg
+
+		// wait for reply
+		waitReply(docMsg.Uid, rchan)
+	}
+}
+
+func waitReply(uid string, rchan chan spec.CreateDocumentReply) {
+	for {
+		select {
+		case docReply := <-rchan:
+			// responses received
+			log.Printf("INFO: received reply: %v uid: %s", docReply, uid)
+
+			// remove channel from rchans
+			delete(rchans, uid)
+			return
+		case <-time.After(10 * time.Second):
+			// timeout
+			log.Printf("ERROR: request timeout uid: %s", uid)
+
+			// remove channel from rchans
+			delete(rchans, uid)
+			return
+		}
 	}
 }

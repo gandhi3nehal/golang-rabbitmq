@@ -72,6 +72,11 @@ func initConsumer() {
 			if err != nil {
 				log.Printf("ERROR: fail to ack: %s", err.Error())
 			}
+
+			// find waiting channel(with uid) and forward the reply to it
+			if rchan, ok := rchans[docRply.Uid]; ok {
+				rchan <- *docRply
+			}
 		}
 	}
 }

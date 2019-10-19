@@ -15,7 +15,10 @@ type RabbitMsg struct {
 }
 
 // channel to publish rabbit messages
-var rchan = make(chan RabbitMsg, 10)
+var pchan = make(chan RabbitMsg, 10)
+
+// keep waiting channels for reply
+var rchans = make(map[string](chan spec.CreateDocumentReply))
 
 func initProducer() {
 	// conn
@@ -36,7 +39,7 @@ func initProducer() {
 
 	for {
 		select {
-		case msg := <-rchan:
+		case msg := <-pchan:
 			// marshal
 			data, err := proto.Marshal(&msg.Message)
 			if err != nil {
@@ -61,14 +64,11 @@ func initProducer() {
 			}
 
 			log.Printf("INFO: published msg: %v", msg.Message)
-
-			// wait reply from rabbit
-			//go waitReply(conn, docMsg)
 		}
 	}
 }
 
-func waitReply(conn *amqp.Connection, docMsg spec.CreateDocumentMessage) {
+func waitReply1(conn *amqp.Connection, docMsg spec.CreateDocumentMessage) {
 	// create channel
 	amqpChannel, err := conn.Channel()
 	if err != nil {
