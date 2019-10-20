@@ -16,9 +16,6 @@ type RabbitMsg struct {
 // channel to publish rabbit messages
 var pchan = make(chan RabbitMsg, 10)
 
-// keep waiting channels for reply
-var rchans = make(map[string](chan spec.CreateDocumentReply))
-
 func initProducer() {
 	// conn
 	conn, err := amqp.Dial(rabbitConfig.uri)

@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// keep waiting channels for reply messages from rabbit
+var rchans = make(map[string](chan spec.CreateDocumentReply))
+
 func initApi() {
 	// router
 	r := mux.NewRouter()
