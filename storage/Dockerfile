@@ -24,8 +24,9 @@ ADD . /app
 WORKDIR /app
 
 # add protobuf spec
-RUN git clone https://github.com/erangaeb/document-spec
-RUN protoc document-spec/*.proto --go_out=:$GOPATH/src
+RUN git clone https://gitlab.com/rahasak-labs/rabbit.git
+RUN protoc rabbit/spec/*.proto --go_out=:$GOPATH/src
+RUN rm -rf rabbit
 
 # build
 RUN go build -o build/storage src/*.go
