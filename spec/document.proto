@@ -1,6 +1,6 @@
 syntax="proto3";
 
-option go_package = "github.com/erangaeb/document-spec/document-spec";
+option go_package = "gitlab.com/rahasak-labs/rabbit/spec";
 
 package main;
 
