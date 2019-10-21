@@ -1,7 +1,7 @@
 package main
 
 import (
-	spec "github.com/erangaeb/document-spec/document-spec"
+	spec "gitlab.com/rahasak-labs/rabbit/spec"
 	"strconv"
 	"time"
 )

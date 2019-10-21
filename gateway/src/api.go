@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	spec "github.com/erangaeb/document-spec/document-spec"
 	"github.com/gorilla/mux"
+	spec "gitlab.com/rahasak-labs/rabbit/spec"
 	"io"
 	"io/ioutil"
 	"log"

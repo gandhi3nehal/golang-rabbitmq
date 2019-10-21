@@ -1,9 +1,9 @@
 package main
 
 import (
-	spec "github.com/erangaeb/document-spec/document-spec"
 	"github.com/golang/protobuf/proto"
 	"github.com/streadway/amqp"
+	spec "gitlab.com/rahasak-labs/rabbit/spec"
 	"log"
 	"os"
 )
